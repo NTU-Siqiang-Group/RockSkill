@@ -7,7 +7,7 @@ description: Use when starting a new RocksDB feature implementation — explores
 
 ## Overview
 
-This skill runs before any code is written. It explores the RocksDB codebase, classifies the requested feature, finds reference implementations, and produces a structured exploration report consumed by `rocksdb-implement`.
+This skill runs before any code is written. It explores the RocksDB codebase, classifies the requested feature, finds reference implementations, and produces a structured exploration report consumed by `rocksdb-implement.md`.
 
 ## Feature Type Classification
 
@@ -28,7 +28,7 @@ Match the user's request to one of the following feature types:
 
 1. **Classify the feature type** — Match the user's request to the feature type list above. If ambiguous, ask one clarifying question.
 
-2. **Read the relevant interface** — Look up the base class and header from `rocksdb-knowledge.md` "Key Interfaces per Feature Type" table. Read the header file. Note: required virtual methods, key data structures, thread-safety contracts, lifetime/ownership patterns.
+2. **Read the relevant interface** — Look up the base class and header from `references/rocksdb-knowledge.md` "Key Interfaces per Feature Type" table. Read the header file. Note: required virtual methods, key data structures, thread-safety contracts, lifetime/ownership patterns.
 
 3. **Find existing implementations** — Locate 1-2 existing implementations of the same feature type. Read them to understand: constructor patterns, method implementations, error handling patterns, how they interact with the rest of the system. These serve as templates.
 
@@ -38,7 +38,7 @@ Match the user's request to one of the following feature types:
 
 6. **Build the file modification list** — Enumerate every file to create or modify. Group into: (a) New files — header + implementation, (b) Existing files to modify — registration, build system, options.
 
-7. **Assess metrics opportunity** — Reference `rocksdb-stats-knowledge.md`. Decide if the feature warrants: new tickers (for countable events), new histograms (for latency/size distributions), new PerfContext counters (for per-operation tracking). Note which macros to use and where.
+7. **Assess metrics opportunity** — Reference `references/rocksdb-stats-knowledge.md`. Decide if the feature warrants: new tickers (for countable events), new histograms (for latency/size distributions), new PerfContext counters (for per-operation tracking). Note which macros to use and where.
 
 ## Output Format
 
@@ -74,6 +74,6 @@ Produce the following structured exploration report:
 
 ---
 
-References: `rocksdb-knowledge.md` for interfaces and build system, `rocksdb-stats-knowledge.md` for metrics patterns.
+References: `references/rocksdb-knowledge.md` for interfaces and build system, `references/rocksdb-stats-knowledge.md` for metrics patterns.
 
-Next stage: pass exploration report to `rocksdb-implement`.
+Next stage: pass exploration report to `rocksdb-implement.md`.

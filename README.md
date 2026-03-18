@@ -1,28 +1,23 @@
-# RocksDB Feature Implementation Skills
+# RocksDB Feature Implementation Skill
 
-A set of AI-agent skills that guide coding assistants through implementing new features in RocksDB. The skills encode structural knowledge of the RocksDB codebase and follow a pipeline: **explore** → **implement** → **test**.
+An AI-agent skill that guides coding assistants through implementing new features in RocksDB. Encodes structural knowledge of the RocksDB codebase and follows a pipeline: **explore** → **implement** → **test**.
 
-## What's Included
+## Skill Structure
 
-### Pipeline Skills
+```
+rockskill/
+├── SKILL.md                        # Entry point / orchestrator
+├── rocksdb-explore.md              # Stage 1: exploration
+├── rocksdb-implement.md            # Stage 2: implementation
+├── rocksdb-test.md                 # Stage 3: testing
+└── references/
+    ├── rocksdb-knowledge.md        # Structural knowledge
+    └── rocksdb-stats-knowledge.md  # Statistics & profiling
+```
 
-| Skill | File | Purpose |
-|---|---|---|
-| **rocksdb-feature** | `skills/rocksdb-feature.md` | Orchestrator — entry point that runs the full pipeline |
-| **rocksdb-explore** | `skills/rocksdb-explore.md` | Stage 1: classify feature type, find reference implementations, build file list |
-| **rocksdb-implement** | `skills/rocksdb-implement.md` | Stage 2: write code following feature-type-specific patterns |
-| **rocksdb-test** | `skills/rocksdb-test.md` | Stage 3: write and run tests, scaled to change size |
+`SKILL.md` is the entry point. It orchestrates the pipeline and tells the agent when to read each sub-file. The `references/` directory contains shared knowledge files used by multiple stages.
 
-### Reference Files
-
-| File | Purpose |
-|---|---|
-| `references/rocksdb-knowledge.md` | RocksDB directory layout, key interfaces, build system, coding conventions |
-| `references/rocksdb-stats-knowledge.md` | Statistics framework, PerfContext, IOStatsContext, how to add metrics |
-
-### Supported Feature Types
-
-The skills cover these RocksDB extension points:
+## Supported Feature Types
 
 - **Options** (CF/DB/BlockBased) — add new configuration options
 - **Public APIs** — add methods to the `DB` interface
@@ -36,91 +31,45 @@ The skills cover these RocksDB extension points:
 
 ## Usage
 
-Start by pointing your AI coding assistant at `skills/rocksdb-feature.md` (the orchestrator), or invoke a specific stage directly. The pipeline skills reference the files in `references/` for structural knowledge.
-
 ### Claude Code
 
-Copy skill directories into `~/.claude/skills/` (personal) or `.claude/skills/` (project-level). Each skill needs to be a directory with a `SKILL.md` file:
+Copy the `rockskill/` directory into your skills location:
 
 ```bash
-# Create skill directories
-for skill in rocksdb-feature rocksdb-explore rocksdb-implement rocksdb-test; do
-  mkdir -p ~/.claude/skills/$skill
-  cp skills/$skill.md ~/.claude/skills/$skill/SKILL.md
-done
-
-# Copy reference files into skills that need them
-for skill in rocksdb-explore rocksdb-implement rocksdb-test; do
-  cp references/rocksdb-knowledge.md ~/.claude/skills/$skill/
-done
-for skill in rocksdb-explore rocksdb-implement; do
-  cp references/rocksdb-stats-knowledge.md ~/.claude/skills/$skill/
-done
+cp -r rockskill ~/.claude/skills/rockskill
 ```
 
-Then invoke with `/rocksdb-feature` in any Claude Code session.
+Then invoke with `/rockskill` in any Claude Code session.
 
 ### Cursor
 
-Add the skill files to your project's context. In `.cursor/rules/`, create a rule file that includes the skill content:
+Add to `.cursor/rules/`:
 
 ```bash
-# Option 1: Copy as a rule file
-cp skills/rocksdb-feature.md .cursor/rules/rocksdb-feature.mdc
-
-# Option 2: Reference in your existing rules
-# Add to .cursorrules: "When implementing RocksDB features, follow the instructions in skills/rocksdb-feature.md"
+cp rockskill/SKILL.md .cursor/rules/rocksdb-feature.mdc
 ```
+
+Or reference in `.cursorrules`: "When implementing RocksDB features, follow the instructions in `rockskill/SKILL.md`"
 
 ### Windsurf
 
-Add the skill content to your Windsurf rules in `.windsurfrules` or reference the files in your workspace instructions.
+Reference `rockskill/SKILL.md` in `.windsurfrules` or your workspace instructions.
 
 ### GitHub Copilot
 
-Reference the skills in `.github/copilot-instructions.md`:
+Reference in `.github/copilot-instructions.md`:
 
 ```markdown
-When implementing new features in RocksDB, follow the workflow described in skills/rocksdb-feature.md.
-Reference files for codebase structure: references/rocksdb-knowledge.md, references/rocksdb-stats-knowledge.md.
+When implementing new features in RocksDB, follow the workflow in rockskill/SKILL.md.
 ```
 
 ### Other Tools
 
-Any AI coding assistant that supports custom instructions or context files can use these skills. Point the tool at the relevant `.md` files:
-
-1. For the full workflow: `skills/rocksdb-feature.md`
-2. For specific stages: `skills/rocksdb-explore.md`, `skills/rocksdb-implement.md`, `skills/rocksdb-test.md`
-3. For reference: `references/rocksdb-knowledge.md`, `references/rocksdb-stats-knowledge.md`
+Point your AI coding assistant at `rockskill/SKILL.md` as the entry point. It references all other files by relative path.
 
 ## Scope
 
-The skills cover **core C++ implementation and testing**. They intentionally exclude:
-
-- Release notes
-- Java/C API bindings
-- db_bench integration
-- Stress test code
-
-These are mentioned as follow-up items in the orchestrator's final summary.
-
-## File Structure
-
-```
-rockskill/
-├── README.md
-├── skills/
-│   ├── rocksdb-feature.md          # Orchestrator
-│   ├── rocksdb-explore.md          # Stage 1: Exploration
-│   ├── rocksdb-implement.md        # Stage 2: Implementation
-│   └── rocksdb-test.md             # Stage 3: Testing
-├── references/
-│   ├── rocksdb-knowledge.md        # Structural knowledge
-│   └── rocksdb-stats-knowledge.md  # Statistics & profiling knowledge
-└── docs/
-    ├── design.md                   # Design spec
-    └── plan.md                     # Implementation plan
-```
+Covers **core C++ implementation and testing**. Intentionally excludes release notes, Java/C bindings, db_bench integration, and stress tests (mentioned as follow-up items in the orchestrator's summary).
 
 ## License
 

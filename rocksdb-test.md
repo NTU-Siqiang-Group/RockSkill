@@ -224,5 +224,5 @@ ASSERT_GT(get_perf_context()->your_counter, 0);
 
 ## Cross-References
 
-- **References:** `rocksdb-knowledge.md` for test conventions and build commands
-- **Previous stage:** `rocksdb-implement`
+- **References:** `references/rocksdb-knowledge.md` for test conventions and build commands
+- **Previous stage:** `rocksdb-implement.md`

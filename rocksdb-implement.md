@@ -7,7 +7,7 @@ description: Use when writing RocksDB feature code after exploration is complete
 
 ## Overview
 
-This skill takes the exploration report produced by `rocksdb-explore` and produces the implementation. It contains a general workflow that applies to all feature types, followed by feature-type-specific sections with detailed patterns, files to touch, and reference implementations.
+This skill takes the exploration report produced by `rocksdb-explore.md` and produces the implementation. It contains a general workflow that applies to all feature types, followed by feature-type-specific sections with detailed patterns, files to touch, and reference implementations.
 
 ---
 
@@ -27,7 +27,7 @@ These steps apply to every feature type. Follow them in order.
    ```
    Do NOT manually edit BUCK files.
 
-5. **Add metrics** — If the exploration report identified metrics opportunities, add tickers, histograms, or PerfContext counters following `rocksdb-stats-knowledge.md`.
+5. **Add metrics** — If the exploration report identified metrics opportunities, add tickers, histograms, or PerfContext counters following `references/rocksdb-stats-knowledge.md`.
 
 6. **Run `make format-auto`** — Auto-format all changed files before testing. This ensures code matches the project `.clang-format` style.
 
@@ -266,6 +266,6 @@ These conventions are enforced for all feature types:
 
 ## Cross-References
 
-- **References:** `rocksdb-knowledge.md` for interfaces and build system, `rocksdb-stats-knowledge.md` for metrics patterns.
-- **Previous stage:** `rocksdb-explore` (produces the exploration report consumed here).
-- **Next stage:** `rocksdb-test` (writes and runs tests for the implementation).
+- **References:** `references/rocksdb-knowledge.md` for interfaces and build system, `references/rocksdb-stats-knowledge.md` for metrics patterns.
+- **Previous stage:** `rocksdb-explore.md` (produces the exploration report consumed here).
+- **Next stage:** `rocksdb-test.md` (writes and runs tests for the implementation).
