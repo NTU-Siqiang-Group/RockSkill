@@ -250,6 +250,39 @@ These steps apply to every feature type. Follow them in order.
 
 ---
 
+## Implementation Report Requirements
+
+The Implementation Report (generated in pipeline step 3) must be detailed enough to write code without ambiguity. Use this checklist to ensure completeness.
+
+### Per-Method Behavioral Spec
+
+For each method to implement, specify:
+- **Purpose**: What does this method do? One sentence.
+- **Inputs/Outputs**: Key parameters, return type, side effects.
+- **Positive behavior**: Step-by-step logic (pseudocode for non-trivial methods).
+- **Negative behavior**: What this method must NOT do. Explicitly call out deviations from reference implementations. Example: "Unlike LevelCompactionPicker, do NOT call GetOverlappingInputs on the output level — tiering appends without merging."
+
+### Reference Divergence Analysis
+
+For each reference implementation identified in the Exploration Report:
+- List the key behaviors/patterns in that reference.
+- For each behavior, mark: **KEEP** (reuse as-is) or **CHANGE** (different for this feature), with reason.
+- This prevents blind copy-paste of patterns that don't apply.
+
+Example:
+
+| Reference Behavior | Keep/Change | Reason |
+|--------------------|-------------|--------|
+| `ExpandInputsToCleanCut` on input level | KEEP | Need clean key boundaries |
+| `GetOverlappingInputs` on output level | CHANGE → remove | Tiering appends, doesn't merge with output level |
+| `RegisterCompaction` after picking | KEEP | Standard bookkeeping |
+
+### Pseudocode for Core Logic
+
+For methods with non-trivial logic (e.g., `PickCompaction`, `NeedsCompaction`), include pseudocode showing the control flow, key decisions, and edge cases. This is reviewed by the user before any code is written.
+
+---
+
 ## Coding Conventions
 
 These conventions are enforced for all feature types:
@@ -264,8 +297,42 @@ These conventions are enforced for all feature types:
 
 ---
 
+## MVCC, Timestamp, and Transaction Considerations
+
+Every new feature must preserve RocksDB's existing guarantees around versioning, timestamps, and transactions. Review this checklist during implementation. If any item applies, read the corresponding reference for details.
+
+### Multi-Version Control (MVCC)
+
+Reference: `references/rocksdb-mvcc-knowledge.md`
+
+- **Key format**: InternalKeys contain `[user_key | (timestamp) | seqno + type]`. If your feature encodes or decodes keys, account for this layout.
+- **Snapshot visibility**: Reads filter by sequence number. If you add a new read path, it must respect `ReadOptions::snapshot` — only return entries with `seq <= snapshot_seq`.
+- **Compaction correctness**: If you add a new entry type or modify compaction logic, ensure `CompactionIterator` never drops a version that an active snapshot needs.
+- **Write path sequencing**: New write types must flow through `WriteBatch` → sequence allocation → MemTable insertion. Do not bypass this path or assign sequence numbers manually.
+
+### User-Defined Timestamps (UDT)
+
+Reference: `references/rocksdb-mvcc-knowledge.md` (UDT section)
+
+- **Timestamp in keys**: When UDT is enabled (`Comparator::timestamp_size() > 0`), timestamp bytes sit between user key and internal footer. Use `ExtractTimestampFromKey()` / `StripTimestampFromUserKey()` — do not hard-code key offsets.
+- **Read filtering**: If your feature adds a read path, check `ReadOptions::timestamp`. If set, filter results to `ts <= read_timestamp`.
+- **Compaction GC**: Respect `full_history_ts_low` — never drop versions with `ts >= full_history_ts_low`.
+- **Deletion type**: Use `kTypeDeletionWithTimestamp` (0x14) instead of `kTypeDeletion` when UDT is enabled.
+
+### Concurrency and Transactions
+
+Reference: `references/rocksdb-concurrency-knowledge.md`
+
+- **Thread safety**: Document thread-safety assumptions for new classes. If your feature is accessed from read path, it must work without holding the DB mutex (readers use SuperVersion refs, not locks).
+- **Write group compatibility**: If your feature adds a new write option flag, consider whether it affects write group batching — writers with incompatible flags cannot be grouped.
+- **Transaction visibility**: If your feature interacts with `WritePrepared` or `WriteUnprepared` transactions, data may be in the DB but uncommitted. Use `SnapshotChecker` to determine visibility, not raw sequence comparison.
+- **2PC markers**: If your feature touches WAL replay or recovery, account for 2PC markers (`kTypeBeginPrepareXID`, `kTypeEndPrepareXID`, `kTypeCommitXID`, `kTypeRollbackXID`).
+- **Lock interaction**: If your feature performs reads inside a transaction path (e.g., `GetForUpdate`), ensure it acquires appropriate locks via `LockManager`.
+
+---
+
 ## Cross-References
 
-- **References:** `references/rocksdb-knowledge.md` for interfaces and build system, `references/rocksdb-stats-knowledge.md` for metrics patterns.
+- **References:** `references/rocksdb-knowledge.md` for interfaces and build system, `references/rocksdb-stats-knowledge.md` for metrics patterns, `references/rocksdb-mvcc-knowledge.md` for MVCC and timestamps, `references/rocksdb-concurrency-knowledge.md` for concurrency and transactions.
 - **Previous stage:** `rocksdb-explore.md` (produces the exploration report consumed here).
 - **Next stage:** `rocksdb-test.md` (writes and runs tests for the implementation).

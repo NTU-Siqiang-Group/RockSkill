@@ -67,10 +67,14 @@ When implementing new features in RocksDB, follow the workflow in rockskill/SKIL
 
 Point your AI coding assistant at `rockskill/SKILL.md` as the entry point. It references all other files by relative path.
 
+## Test Case
+
+A test case of using rockskill to implement Tiering compaction in RocksDB is available at [RockSkill-cases](https://github.com/NTU-Siqiang-Group/RockSkill-cases). It includes the full pipeline output (exploration report, implementation report, final summary) and benchmark results.
+
 ## Scope
 
 Covers **core C++ implementation and testing**. Intentionally excludes release notes, Java/C bindings, db_bench integration, and stress tests (mentioned as follow-up items in the orchestrator's summary).
 
 ## License
 
-[Add your license here]
+MIT License
