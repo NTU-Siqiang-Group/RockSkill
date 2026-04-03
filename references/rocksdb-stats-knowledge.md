@@ -6,7 +6,15 @@ description: >-
 
 # RocksDB Statistics & Profiling Reference
 
-## Components
+## Contents
+
+- [Components and Key Files](#components-and-key-files)
+- [Key Macros](#key-macros)
+- [Adding New Metrics](#adding-new-metrics)
+- [StatsLevel](#statslevel)
+- [PerfLevel](#perflevel)
+
+## Components and Key Files
 
 | Component | Key Files | Purpose |
 |---|---|---|
@@ -15,6 +23,17 @@ description: >-
 | IOStatsContext | `include/rocksdb/iostats_context.h`, `monitoring/iostats_context_imp.h` | Thread-local I/O timing and byte counters |
 | PerfLevel | `include/rocksdb/perf_level.h` | Controls profiling granularity per-thread |
 | Histogram | `monitoring/histogram.h` | Distribution tracking (median, p95, p99, avg, stddev) |
+
+## Key Macros
+
+- `RecordTick(stats, TICKER_NAME, count)` — increment a global ticker by `count` (defaults to 1).
+- `RecordInHistogram(stats, HISTOGRAM_NAME, value)` — record a single value into a histogram bucket.
+- `PERF_TIMER_GUARD(metric)` — scoped wall-time measurement; starts on construction, records elapsed time on destruction.
+- `PERF_CPU_TIMER_GUARD(metric, clock)` — scoped CPU-time measurement using the provided clock.
+- `PERF_COUNTER_ADD(metric, value)` — increment a thread-local PerfContext counter by `value`.
+- `PERF_COUNTER_BY_LEVEL_ADD(metric, value, level)` — increment a per-level PerfContext counter.
+- `IOSTATS_TIMER_GUARD(metric)` — scoped I/O timing; records wall time spent in the guarded block.
+- `IOSTATS_ADD(metric, value)` — increment a thread-local IOStatsContext counter by `value`.
 
 ## Adding New Metrics
 
@@ -48,17 +67,6 @@ description: >-
 2. Add a new `uint64_t` field to `IOStatsContext`.
 3. Ensure the field is covered in the existing `Reset()` and `ToString()` methods in `monitoring/iostats_context.cc`.
 4. Use `IOSTATS_ADD(your_metric, value)` at the instrumentation site.
-
-## Key Macros
-
-- `RecordTick(stats, TICKER_NAME, count)` — increment a global ticker by `count` (defaults to 1).
-- `RecordInHistogram(stats, HISTOGRAM_NAME, value)` — record a single value into a histogram bucket.
-- `PERF_TIMER_GUARD(metric)` — scoped wall-time measurement; starts on construction, records elapsed time on destruction.
-- `PERF_CPU_TIMER_GUARD(metric, clock)` — scoped CPU-time measurement using the provided clock.
-- `PERF_COUNTER_ADD(metric, value)` — increment a thread-local PerfContext counter by `value`.
-- `PERF_COUNTER_BY_LEVEL_ADD(metric, value, level)` — increment a per-level PerfContext counter.
-- `IOSTATS_TIMER_GUARD(metric)` — scoped I/O timing; records wall time spent in the guarded block.
-- `IOSTATS_ADD(metric, value)` — increment a thread-local IOStatsContext counter by `value`.
 
 ## StatsLevel
 

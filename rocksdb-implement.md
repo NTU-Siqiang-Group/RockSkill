@@ -252,34 +252,136 @@ These steps apply to every feature type. Follow them in order.
 
 ## Implementation Report Requirements
 
-The Implementation Report (generated in pipeline step 3) must be detailed enough to write code without ambiguity. Use this checklist to ensure completeness.
+The Implementation Report (generated in pipeline step 4) must be detailed enough that a **fresh agent with zero RocksDB context** can execute it step-by-step and produce correct, compiling code. The executing agent has not seen the Exploration Report or codebase — the plan must be self-contained.
 
-### Per-Method Behavioral Spec
+### Document Header
 
-For each method to implement, specify:
-- **Purpose**: What does this method do? One sentence.
-- **Inputs/Outputs**: Key parameters, return type, side effects.
-- **Positive behavior**: Step-by-step logic (pseudocode for non-trivial methods).
-- **Negative behavior**: What this method must NOT do. Explicitly call out deviations from reference implementations. Example: "Unlike LevelCompactionPicker, do NOT call GetOverlappingInputs on the output level — tiering appends without merging."
+Every Implementation Report must start with:
+
+```markdown
+# [Feature Name] Implementation Report
+
+**Goal:** [One sentence — what this builds]
+
+**Feature Type:** [From exploration report]
+
+**Architecture:** [2-3 sentences — approach and key design decisions]
+
+---
+```
 
 ### Reference Divergence Analysis
+
+Place this immediately after the header — it frames all subsequent decisions.
 
 For each reference implementation identified in the Exploration Report:
 - List the key behaviors/patterns in that reference.
 - For each behavior, mark: **KEEP** (reuse as-is) or **CHANGE** (different for this feature), with reason.
 - This prevents blind copy-paste of patterns that don't apply.
 
-Example:
+Example (compaction strategy referencing `LevelCompactionPicker`):
 
 | Reference Behavior | Keep/Change | Reason |
 |--------------------|-------------|--------|
 | `ExpandInputsToCleanCut` on input level | KEEP | Need clean key boundaries |
-| `GetOverlappingInputs` on output level | CHANGE → remove | Tiering appends, doesn't merge with output level |
+| `GetOverlappingInputs` on output level | CHANGE → remove | New strategy does not merge with output level |
 | `RegisterCompaction` after picking | KEEP | Standard bookkeeping |
 
-### Pseudocode for Core Logic
+### File Structure
 
-For methods with non-trivial logic (e.g., `PickCompaction`, `NeedsCompaction`), include pseudocode showing the control flow, key decisions, and edge cases. This is reviewed by the user before any code is written.
+Before defining tasks, list every file to create or modify with its responsibility:
+
+```markdown
+## File Structure
+
+**New files:**
+- `path/to/new_feature.h` — class declaration, public interface
+- `path/to/new_feature.cc` — implementation
+
+**Files to modify:**
+- `include/rocksdb/advanced_options.h:42` — add enum value or option field
+- `db/relevant_file.cc:1234` — add factory case or registration
+- `options/options_helper.cc:567` — add serialization entry (if new option/enum)
+- `src.mk:89` — add new .cc to source list
+- `CMakeLists.txt:345` — add new .cc to cmake
+```
+
+Line numbers must be approximate but present — they tell the executing agent where to look.
+
+### Task Decomposition
+
+Break the implementation into bite-sized tasks. Each task targets one file or one logical unit. Each step within a task is a **single action**.
+
+#### Task Structure
+
+````markdown
+### Task N: [Component Name]
+
+**Files:**
+- Create: `exact/path/to/file.h`
+- Create: `exact/path/to/file.cc`
+- Modify: `path/to/existing.cc:123` — [what change]
+
+**Behavioral spec:**
+- **Purpose**: [One sentence]
+- **Does**: [What this component does — concrete behaviors]
+- **Does NOT**: [What this component must NOT do — deviations from reference]
+
+- [ ] **Step 1: Create header with class declaration**
+
+```cpp
+// Show the complete header file content.
+// The executing agent copies this verbatim.
+```
+
+- [ ] **Step 2: Implement core method**
+
+```cpp
+// Show the complete method implementation.
+// No pseudocode, no placeholders, no ellipsis.
+// For long methods (>80 lines), may use:
+//   // [lines N-M identical to reference: ClassName::MethodName]
+// to indicate a verbatim copy the agent can look up.
+```
+
+- [ ] **Step 3: Register in factory / enum / options**
+
+```cpp
+// Show the exact code to insert and where (file:line).
+```
+````
+
+### Step Granularity Rules
+
+Each step must be **one action** that takes 2-5 minutes:
+
+| Good (single action) | Bad (multiple actions) |
+|----------------------|----------------------|
+| "Create header with class declaration" | "Create header and implement all methods" |
+| "Add enum value to CompactionStyle" | "Update all option files" |
+| "Add serialization entry in options_helper.cc" | "Wire up options" |
+
+### No Placeholders
+
+Every step must contain the **actual code** the executing agent will write. These are plan failures — never write them:
+
+- `// TODO`, `// implement later`, `// fill in details`
+- `// Add appropriate error handling`
+- `// Similar to Task N` (repeat the code — the agent may read tasks out of order)
+- Pseudocode where real code is needed (e.g., `// loop through levels and pick files`)
+- Steps that describe what to do without showing the code
+- References to functions, types, or variables not defined or shown in the plan
+- `...` or ellipsis in code blocks (show the full function body)
+
+**Exception:** For methods longer than ~80 lines, show the complete code but you may use a comment like `// [lines 45-60 identical to reference: LevelCompactionPicker::SetupOtherInputs]` to indicate a verbatim copy from a named reference. The executing agent can then read that reference.
+
+### Self-Review
+
+After writing the complete report, scan for these before presenting to the critic agent:
+
+1. **Divergence coverage**: Every CHANGE in the divergence table has a corresponding task step. Every KEEP has code that preserves it.
+2. **Placeholder scan**: No `TODO`, `...`, `// similar to`, or `// implement` in code blocks.
+3. **Type consistency**: Function signatures and enum values in later tasks match their definitions in earlier tasks.
 
 ---
 

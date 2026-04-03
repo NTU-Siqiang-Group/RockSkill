@@ -8,12 +8,92 @@ description: >-
 
 # RocksDB Concurrency & Transaction Reference
 
+## Contents
+
+- [Core Concurrency Model](#core-concurrency-model)
+- [Guarantees](#guarantees)
+- [Key Source Files](#key-source-files)
+- [Write Path: Leader-Follower Batching](#write-path-leader-follower-batching)
+- [Read Path: Lock-Free via SuperVersion](#read-path-lock-free-via-superversion)
+- [DB Mutex Scope](#db-mutex-scope)
+- [Transaction Architecture](#transaction-architecture)
+- [Pessimistic Transactions](#pessimistic-transactions)
+- [Optimistic Transactions](#optimistic-transactions)
+- [Two-Phase Commit](#two-phase-commit-2pc)
+
 ## Core Concurrency Model
 
 Two fundamental principles:
 
 1. **Readers never block writers, writers never block readers** — via SuperVersion ref counting and lock-free data structures
 2. **Concurrent writes are serialized into groups** — a leader-follower pattern batches writes for efficiency
+
+---
+
+## Guarantees
+
+### Base RocksDB (No Transactions)
+
+| Guarantee | Mechanism |
+|-----------|-----------|
+| Readers never block writers | SuperVersion ref counting |
+| Writers never block readers | Atomic SuperVersion installation |
+| Atomic batch writes | WriteBatch with consecutive sequence numbers |
+| Crash recovery | WAL replay restores state |
+| Snapshot isolation | Immutable point-in-time view |
+
+### Pessimistic Transactions
+
+| Guarantee | Mechanism |
+|-----------|-----------|
+| Serializable isolation | Row-level locks + snapshot validation |
+| No dirty reads | Writes buffered until commit |
+| Repeatable reads | `GetForUpdate` prevents concurrent modification |
+| Deadlock handling | Wait-for graph traversal + configurable timeout |
+| Crash atomicity | 2PC WAL markers |
+
+### Optimistic Transactions
+
+| Guarantee | Mechanism |
+|-----------|-----------|
+| Snapshot isolation | Commit-time validation |
+| No deadlocks | No locks acquired |
+| Atomic commit-or-abort | Validation fails → entire txn rejected |
+
+### What RocksDB Does NOT Guarantee
+
+- **No cross-CF atomicity** without explicit transaction use
+- **No automatic retry** on conflict — application handles `Status::Busy()`
+- **No distributed transactions** — 2PC is local only
+- **WriteUnprepared may leave partial writes** on crash before prepare
+- **Optimistic transactions may starve** under high contention
+
+---
+
+## Key Source Files
+
+### Concurrency
+
+| File | What It Contains |
+|------|-----------------|
+| `db/write_thread.h` | WriteThread, Writer, WriteGroup, state machine |
+| `db/write_controller.h` | Write stall rate limiting |
+| `db/column_family.h` | SuperVersion, thread-local caching |
+| `db/db_impl/db_impl.h` | DB mutex, background job coordination |
+| `db/version_set.h` | Version, VersionSet, LogAndApply |
+| `memtable/inlineskiplist.h` | Lock-free concurrent SkipList |
+
+### Transactions
+
+| File | What It Contains |
+|------|-----------------|
+| `include/rocksdb/utilities/transaction.h` | Public Transaction API |
+| `include/rocksdb/utilities/transaction_db.h` | TransactionDB, options |
+| `utilities/transactions/pessimistic_transaction.h` | PessimisticTransaction |
+| `utilities/transactions/write_prepared_txn_db.h` | CommitCache, PreparedHeap |
+| `utilities/transactions/optimistic_transaction.h` | OCC validation |
+| `utilities/transactions/lock/point/point_lock_manager.h` | Striped lock manager |
+| `db/snapshot_checker.h` | SnapshotChecker for WritePrepared visibility |
 
 ---
 
@@ -284,76 +364,3 @@ txn->Commit();            // Phase 2: write commit marker
 
 - If your feature interacts with WAL replay or recovery, account for 2PC markers.
 - WritePrepared/WriteUnprepared have different visibility rules — data is in the DB but may not be committed. Use `SnapshotChecker` to determine visibility.
-
----
-
-## Guarantees
-
-### Base RocksDB (No Transactions)
-
-| Guarantee | Mechanism |
-|-----------|-----------|
-| Readers never block writers | SuperVersion ref counting |
-| Writers never block readers | Atomic SuperVersion installation |
-| Atomic batch writes | WriteBatch with consecutive sequence numbers |
-| Crash recovery | WAL replay restores state |
-| Snapshot isolation | Immutable point-in-time view |
-
-### Pessimistic Transactions
-
-| Guarantee | Mechanism |
-|-----------|-----------|
-| Serializable isolation | Row-level locks + snapshot validation |
-| No dirty reads | Writes buffered until commit |
-| Repeatable reads | `GetForUpdate` prevents concurrent modification |
-| Deadlock handling | Wait-for graph traversal + configurable timeout |
-| Crash atomicity | 2PC WAL markers |
-
-### Optimistic Transactions
-
-| Guarantee | Mechanism |
-|-----------|-----------|
-| Snapshot isolation | Commit-time validation |
-| No deadlocks | No locks acquired |
-| Atomic commit-or-abort | Validation fails → entire txn rejected |
-
-### What RocksDB Does NOT Guarantee
-
-- **No cross-CF atomicity** without explicit transaction use
-- **No automatic retry** on conflict — application handles `Status::Busy()`
-- **No distributed transactions** — 2PC is local only
-- **WriteUnprepared may leave partial writes** on crash before prepare
-- **Optimistic transactions may starve** under high contention
-
----
-
-## Key Source Files
-
-### Concurrency
-
-| File | What It Contains |
-|------|-----------------|
-| `db/write_thread.h` | WriteThread, Writer, WriteGroup, state machine |
-| `db/write_controller.h` | Write stall rate limiting |
-| `db/column_family.h` | SuperVersion, thread-local caching |
-| `db/db_impl/db_impl.h` | DB mutex, background job coordination |
-| `db/version_set.h` | Version, VersionSet, LogAndApply |
-| `memtable/inlineskiplist.h` | Lock-free concurrent SkipList |
-| `port/port_posix.h` | Mutex, RWMutex, CondVar |
-| `monitoring/instrumented_mutex.h` | Stats-wrapped mutexes, RAII locks |
-
-### Transactions
-
-| File | What It Contains |
-|------|-----------------|
-| `include/rocksdb/utilities/transaction.h` | Public Transaction API |
-| `include/rocksdb/utilities/transaction_db.h` | TransactionDB, options |
-| `include/rocksdb/utilities/optimistic_transaction_db.h` | OptimisticTransactionDB |
-| `utilities/transactions/transaction_base.h` | TransactionBaseImpl, SavePoint |
-| `utilities/transactions/pessimistic_transaction.h` | PessimisticTransaction |
-| `utilities/transactions/write_prepared_txn_db.h` | CommitCache, PreparedHeap |
-| `utilities/transactions/write_unprepared_txn.h` | Incremental writes, unprep_seqs_ |
-| `utilities/transactions/optimistic_transaction.h` | OCC validation |
-| `utilities/transactions/lock/point/point_lock_manager.h` | Striped lock manager |
-| `db/snapshot_checker.h` | SnapshotChecker for WritePrepared visibility |
-| `db/dbformat.h` | 2PC WAL marker types |

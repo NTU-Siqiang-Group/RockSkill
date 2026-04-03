@@ -7,6 +7,28 @@ description: >-
 
 # RocksDB Structural Knowledge Reference
 
+## Contents
+
+- [Key Interfaces per Feature Type](#key-interfaces-per-feature-type)
+- [Directory Layout](#directory-layout)
+- [Build System](#build-system)
+- [Testing Conventions](#testing-conventions)
+- [Coding Conventions](#coding-conventions)
+
+## Key Interfaces per Feature Type
+
+| Feature Type | Base Class / Interface | Header Location |
+|---|---|---|
+| Compaction strategy | `CompactionPicker` | `db/compaction/compaction_picker.h` |
+| Memtable | `MemTableRep`, `MemTableRepFactory` | `include/rocksdb/memtablerep.h` |
+| Table format | `TableReader`, `TableBuilder`, `TableFactory` | `include/rocksdb/table.h` |
+| Cache policy | `Cache`, `CacheWrapper` | `include/rocksdb/cache.h` |
+| File system / Env | `FileSystem`, `Env` | `include/rocksdb/file_system.h`, `include/rocksdb/env.h` |
+| Filter policy | `FilterPolicy` | `include/rocksdb/filter_policy.h` |
+| Public API | `DB` | `include/rocksdb/db.h` |
+| Option (CF) | `AdvancedColumnFamilyOptions` | `include/rocksdb/advanced_options.h` |
+| Option (DB) | `DBOptions` | `include/rocksdb/options.h` |
+
 ## Directory Layout
 
 | Directory | Purpose |
@@ -25,20 +47,6 @@ description: >-
 | `db_stress_tool/` | Stress test infrastructure |
 | `utilities/` | Optional features (transactions, backup engine, checkpoint) |
 | `monitoring/` | Statistics, perf context, histograms |
-
-## Key Interfaces per Feature Type
-
-| Feature Type | Base Class / Interface | Header Location |
-|---|---|---|
-| Compaction strategy | `CompactionPicker` | `db/compaction/compaction_picker.h` |
-| Memtable | `MemTableRep`, `MemTableRepFactory` | `include/rocksdb/memtablerep.h` |
-| Table format | `TableReader`, `TableBuilder`, `TableFactory` | `include/rocksdb/table.h` |
-| Cache policy | `Cache`, `CacheWrapper` | `include/rocksdb/cache.h` |
-| File system / Env | `FileSystem`, `Env` | `include/rocksdb/file_system.h`, `include/rocksdb/env.h` |
-| Filter policy | `FilterPolicy` | `include/rocksdb/filter_policy.h` |
-| Public API | `DB` | `include/rocksdb/db.h` |
-| Option (CF) | `AdvancedColumnFamilyOptions` | `include/rocksdb/advanced_options.h` |
-| Option (DB) | `DBOptions` | `include/rocksdb/options.h` |
 
 ## Build System
 

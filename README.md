@@ -32,6 +32,7 @@ The `references/` directory provides domain knowledge that the agent reads befor
 | `rocksdb-compaction-knowledge.md` | Flush/compaction pipelines, partial compaction mechanics, subcompactions, CompactionIterator state machine, MergeOperator |
 | `rocksdb-mvcc-knowledge.md` | Sequence numbers, InternalKey format, snapshots, user-defined timestamps, compaction GC rules |
 | `rocksdb-concurrency-knowledge.md` | Write path (leader-follower batching), read path (SuperVersion), DB mutex scope, transactions (pessimistic/optimistic), 2PC |
+| `rocksdb-table-knowledge.md` | SST file format, block encoding, index/filter blocks, iterator semantics, caching, prefetching |
 | `rocksdb-knowledge.md` | Directory layout, key interfaces per feature type, build system, coding conventions |
 | `rocksdb-stats-knowledge.md` | Statistics framework (tickers, histograms), PerfContext, IOStatsContext, adding new metrics |
 
@@ -46,6 +47,7 @@ rockskill/
 └── references/
     ├── rocksdb-lsm-knowledge.md                # LSM-tree & RocksDB accommodations
     ├── rocksdb-compaction-knowledge.md          # Flush, compaction, merge operators
+    ├── rocksdb-table-knowledge.md               # SST format, blocks, iterators, caching
     ├── rocksdb-mvcc-knowledge.md                # MVCC, snapshots, timestamps
     ├── rocksdb-concurrency-knowledge.md         # Concurrency, transactions
     ├── rocksdb-knowledge.md                     # Codebase structure, build system

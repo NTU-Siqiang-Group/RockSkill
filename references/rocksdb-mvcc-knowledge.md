@@ -8,6 +8,16 @@ description: >-
 
 # RocksDB MVCC & Timestamp Reference
 
+## Contents
+
+- [Two Versioning Mechanisms](#two-versioning-mechanisms)
+- [InternalKey Format](#internalkey-format)
+- [Snapshots](#snapshots)
+- [Key Source Files](#key-source-files)
+- [Sequence Numbers in Read/Write Paths](#sequence-numbers-in-readwrite-paths)
+- [Compaction Version Cleanup](#compaction-version-cleanup)
+- [User-Defined Timestamps (UDT)](#user-defined-timestamps-udt)
+
 ## Two Versioning Mechanisms
 
 | Mechanism | Assigned By | Purpose | GC Control |
@@ -76,6 +86,27 @@ When adding a new feature, use the existing type that matches. Do not invent new
 - If your feature creates long-lived reads (e.g., backup, export), **use a snapshot** to get a consistent view.
 - Hold snapshots for the **shortest time possible** — each held snapshot prevents compaction from reclaiming space.
 - When writing tests involving snapshots: create snapshot, write more data, verify reads through snapshot see only pre-snapshot data.
+
+---
+
+## Key Source Files
+
+| File | What It Contains |
+|------|-----------------|
+| `db/dbformat.h` | InternalKey format, timestamp extraction functions, ValueType enum |
+| `include/rocksdb/types.h` | `SequenceNumber` type |
+| `include/rocksdb/snapshot.h` | Public `Snapshot`, `ManagedSnapshot` API |
+| `db/snapshot_impl.h` | `SnapshotImpl`, `SnapshotList` internals |
+| `db/lookup_key.h` | `LookupKey` (read path key construction) |
+| `db/db_iter.h` | `DBIter` (version filtering, timestamp bounds) |
+| `db/db_impl/db_impl.cc` | `GetSnapshot()`, `ReleaseSnapshot()`, `Get()` |
+| `db/db_impl/db_impl_write.cc` | Write path, sequence allocation |
+| `db/compaction/compaction_iterator.cc` | Version drop rules, snapshot visibility, timestamp GC |
+| `include/rocksdb/comparator.h` | Timestamp-aware comparator interface |
+| `include/rocksdb/options.h` | `ReadOptions::timestamp`, `iter_start_ts` |
+| `include/rocksdb/advanced_options.h` | `persist_user_defined_timestamps` |
+| `include/rocksdb/db.h` | `IncreaseFullHistoryTsLow()`, `GetFullHistoryTsLow()` |
+| `util/udt_util.h` | UDT utility functions, timestamp recovery |
 
 ---
 
@@ -207,24 +238,3 @@ Compaction GC logic (`compaction_iterator.cc`):
 - If your feature adds a new read path: check `Comparator::timestamp_size()` — if non-zero, filtering by timestamp is required.
 - If your feature modifies compaction logic: respect `full_history_ts_low` and timestamp-based GC rules.
 - `kTypeDeletionWithTimestamp` (0x14) is used instead of `kTypeDeletion` when UDT is enabled.
-
----
-
-## Key Source Files
-
-| File | What It Contains |
-|------|-----------------|
-| `db/dbformat.h` | InternalKey format, timestamp extraction functions, ValueType enum |
-| `include/rocksdb/types.h` | `SequenceNumber` type |
-| `include/rocksdb/snapshot.h` | Public `Snapshot`, `ManagedSnapshot` API |
-| `db/snapshot_impl.h` | `SnapshotImpl`, `SnapshotList` internals |
-| `db/lookup_key.h` | `LookupKey` (read path key construction) |
-| `db/db_iter.h` | `DBIter` (version filtering, timestamp bounds) |
-| `db/db_impl/db_impl.cc` | `GetSnapshot()`, `ReleaseSnapshot()`, `Get()` |
-| `db/db_impl/db_impl_write.cc` | Write path, sequence allocation |
-| `db/compaction/compaction_iterator.cc` | Version drop rules, snapshot visibility, timestamp GC |
-| `include/rocksdb/comparator.h` | Timestamp-aware comparator interface |
-| `include/rocksdb/options.h` | `ReadOptions::timestamp`, `iter_start_ts` |
-| `include/rocksdb/advanced_options.h` | `persist_user_defined_timestamps` |
-| `include/rocksdb/db.h` | `IncreaseFullHistoryTsLow()`, `GetFullHistoryTsLow()` |
-| `util/udt_util.h` | UDT utility functions, timestamp recovery |
