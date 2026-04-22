@@ -26,6 +26,7 @@ This skill directory contains the following files:
 | `references/rocksdb-concurrency-knowledge.md` | Shared reference: concurrency, locking, transactions |
 | `references/rocksdb-lsm-knowledge.md` | Shared reference: LSM-tree structure, RocksDB accommodations vs textbook model |
 | `references/rocksdb-compaction-knowledge.md` | Shared reference: flush/compaction pipelines, partial compaction, subcompactions, merge operators |
+| `references/rocksdb-tiered-compaction-knowledge.md` | Shared reference: tiered sorted-run structure, tiered read path, bounded-run picking, run-id persistence and recovery |
 | `references/rocksdb-table-knowledge.md` | Shared reference: SST file format, block encoding, index/filter, iterators, caching |
 
 The pipeline stages read from the shared reference files as needed. Each stage produces output consumed by the next stage.
@@ -35,6 +36,11 @@ The pipeline stages read from the shared reference files as needed. Each stage p
 1. **Parse the request** — Identify what the user wants to build. If the request is ambiguous, ask clarifying questions. Do not ask more than five question before starting exploration.
 
 2. **Read `references/rocksdb-lsm-knowledge.md`** — Understand the textbook LSM-tree model and how RocksDB's implementation differs (L0 overlapping files, partial compaction, trivial moves, dynamic level sizing, etc.). This context is essential before exploring the codebase.
+
+   If the request involves tiered compaction, overlapping sorted runs within a
+   non-L0 level, tiered point/range lookup, or run-id recovery across reopen,
+   also read `references/rocksdb-tiered-compaction-knowledge.md` before
+   exploration.
 
 3. **Read `rocksdb-explore.md`** — Run the exploration stage. Present a summary to the user:
    - Feature type identified
