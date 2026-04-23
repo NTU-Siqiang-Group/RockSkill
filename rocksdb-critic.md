@@ -15,7 +15,7 @@ The critic receives three artifacts from the main pipeline:
 
 1. **User's original request** — what they asked to build
 2. **Exploration Report** — feature type, reference implementations, file list
-3. **Implementation Report** — per-method specs, divergence analysis, pseudocode
+3. **Implementation Report** — per-method specs, divergence analysis, and concrete implementation steps
 
 ## Evaluation Axes
 

@@ -55,7 +55,7 @@ description: >-
 - `make check-progress` — JSON progress for long builds
 - `make format-auto` — auto-format code
 - `make clean && DEBUG_LEVEL=0 make db_bench` — release build for benchmarking
-- New `.cc` files must be added to `Makefile`, `CMakeLists.txt`, and `src.mk`. Then run `/usr/local/bin/python3 buckifier/buckify_rocksdb.py` to regenerate BUCK. Do NOT manually edit BUCK files.
+- New `.cc` files must be added to `Makefile`, `CMakeLists.txt`, and `src.mk`. Then run `python3 buckifier/buckify_rocksdb.py` to regenerate BUCK. Do NOT manually edit BUCK files.
 - Use `-j$(sysctl -n hw.ncpu)` on macOS or `-j$(nproc)` on Linux for parallel builds. Always pass `-j` to avoid single-threaded compilation.
 
 ## Testing Conventions
@@ -72,6 +72,6 @@ description: >-
 - Use `Slice` or `std::string_view` to pass string data without copying.
 - Use `LIKELY(cond)` and `UNLIKELY(cond)` macros on hot-path branches to hint the branch predictor.
 - Prefer stack allocation over heap allocation on hot paths to reduce allocator pressure.
-- Prefer `enum class` over unscoped enums for type safety.
+- Prefer `enum class` for new standalone enums. When extending an existing RocksDB enum or public API, preserve the existing enum style for ABI/API consistency.
 - Document thread-safety assumptions in comments (e.g., "caller must hold mutex", "thread-safe after construction").
 - Follow existing naming conventions. Run `make format-auto` or rely on `.clang-format` to enforce formatting before submitting code.

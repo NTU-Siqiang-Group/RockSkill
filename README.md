@@ -10,7 +10,7 @@ An AI-agent skill that guides coding assistants through implementing new feature
 3. Exploration Report                  ← rocksdb-explore.md
    ✓ CHECKPOINT: user confirms
 4. Implementation Report               ← rocksdb-implement.md
-   (per-method spec, divergence analysis, pseudocode)
+   (per-method spec, divergence analysis, concrete implementation steps)
    ✓ CHECKPOINT: user confirms
 5. Execute implementation
 6. Test                                ← rocksdb-test.md

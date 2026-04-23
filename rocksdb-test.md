@@ -124,7 +124,8 @@ TEST_F(MyFeatureTest, PersistAfterReopen) {
 grep 'your_test_file' Makefile
 
 # Build and run
-make -j$(sysctl -n hw.ncpu) <test_binary_name> && ./<test_binary_name>
+JOBS=${JOBS:-$(nproc 2>/dev/null || sysctl -n hw.ncpu)}
+make -j${JOBS} <test_binary_name> && ./<test_binary_name>
 ```
 
 **Multiple test binaries:** When multiple test binaries need to be run, use `gtest_parallel.py` if available for faster execution:
@@ -136,7 +137,8 @@ python3 ${GTEST_PARALLEL}/gtest_parallel.py ./<test_binary>
 **Large changes:** For large changes, run the full test suite. Use `make clean` before `make check` to ensure a clean build state:
 
 ```bash
-make clean && make -j$(sysctl -n hw.ncpu) check
+JOBS=${JOBS:-$(nproc 2>/dev/null || sysctl -n hw.ncpu)}
+make clean && make -j${JOBS} check
 ```
 
 Run this in the background and monitor progress:

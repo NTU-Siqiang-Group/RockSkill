@@ -23,7 +23,7 @@ These steps apply to every feature type. Follow them in order.
 
 4. **Update build system** — If you created new `.cc` files: update `Makefile`, `CMakeLists.txt`, and `src.mk` to include them. Then regenerate the BUCK file:
    ```
-   /usr/local/bin/python3 buckifier/buckify_rocksdb.py
+   python3 buckifier/buckify_rocksdb.py
    ```
    Do NOT manually edit BUCK files.
 
@@ -393,7 +393,7 @@ These conventions are enforced for all feature types:
 - **Use `Slice` / `std::string_view` to avoid copies** — Pass string data by reference using `Slice` (RocksDB's string view type) rather than copying into `std::string`.
 - **Use `LIKELY`/`UNLIKELY` macros on hot paths** — Annotate branch conditions on performance-critical paths to help branch prediction.
 - **Stack allocation over heap allocation on hot paths** — Avoid `new`/`malloc` in tight loops. Use stack-allocated buffers or arena allocation.
-- **Prefer `enum class` over unscoped enums** — Use scoped enumerations for type safety.
+- **Prefer `enum class` for new standalone enums** — Use scoped enumerations for type safety when introducing a new enum. When extending an existing RocksDB enum or public API, preserve the existing enum style for ABI/API consistency.
 - **Document thread-safety assumptions in comments** — State whether a class or method is thread-safe, requires external synchronization, or is single-threaded only.
 - **Follow existing naming conventions and `.clang-format`** — Match the naming style of surrounding code. Run `make format-auto` to apply the project's clang-format configuration.
 

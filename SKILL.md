@@ -33,7 +33,7 @@ The pipeline stages read from the shared reference files as needed. Each stage p
 
 ## Pipeline
 
-1. **Parse the request** — Identify what the user wants to build. If the request is ambiguous, ask clarifying questions. Do not ask more than five question before starting exploration.
+1. **Parse the request** — Identify what the user wants to build. If the request is ambiguous, ask clarifying questions. Do not ask more than five questions before starting exploration.
 
 2. **Read `references/rocksdb-lsm-knowledge.md`** — Understand the textbook LSM-tree model and how RocksDB's implementation differs (L0 overlapping files, partial compaction, trivial moves, dynamic level sizing, etc.). This context is essential before exploring the codebase.
 
@@ -57,7 +57,7 @@ The pipeline stages read from the shared reference files as needed. Each stage p
    - **MVCC / timestamp / transaction considerations** (if applicable)
    - **Self-review**: quick scan for divergence coverage, placeholders, and type consistency before presenting
 
-5. **Critic Review** — Launch an independent critic agent (following `rocksdb-critic.md`) to evaluate the Implementation Report. The critic checks:
+5. **Critic Review** — Review the Implementation Report using `rocksdb-critic.md`. If the runtime explicitly permits sub-agents or the user asks for delegation, this review may be performed by an independent critic agent; otherwise perform the critic review locally. The critic checks:
    - **Intent alignment**: does the plan match what the user asked for?
    - **Guarantee preservation**: do modified modules still honor snapshot isolation, key ordering, write atomicity, reader-writer isolation, compaction correctness, and LSM invariants?
    - **Correctness**: error handling, thread safety, data races, deadlocks
